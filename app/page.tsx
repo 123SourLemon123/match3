@@ -1,9 +1,9 @@
 import { MatchThreeGame } from './components/match-three-game'
-import { getLeaderboard } from './lib/db'
+import { getLeaderboard, User } from './lib/db'
 import { DebugLog } from './components/debug-log'
 
 export default async function Home() {
-  let initialLeaderboard = [];
+  let initialLeaderboard: User[] = [];
   let error = null;
 
   try {
