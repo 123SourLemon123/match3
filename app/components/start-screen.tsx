@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Leaderboard } from './leaderboard';
@@ -35,7 +35,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
       }
     } catch (error) {
       console.error('Error during authentication:', error);
-      setMessage(`Произошла ошибка: ${error.message}`);
+      setMessage(`Произошла ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
       setIsLoading(false);
     }
