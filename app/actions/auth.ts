@@ -18,7 +18,10 @@ export async function register(name: string, password: string) {
     return { success: true, message: 'Регистрация успешна' };
   } catch (error) {
     console.error('Error during registration:', error);
-    return { success: false, message: `Произошла ошибка при регистрации: ${error.message}` };
+    return { 
+      success: false, 
+      message: `Произошла ошибка при регистрации: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}` 
+    };
   }
 }
 
@@ -36,7 +39,10 @@ export async function login(name: string, password: string) {
     return { success: true, message: 'Вход выполнен успешно' };
   } catch (error) {
     console.error('Error during login:', error);
-    return { success: false, message: `Произошла ошиб��а при входе: ${error.message}` };
+    return { 
+      success: false, 
+      message: `Произошла ошибка при входе: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}` 
+    };
   }
 }
 
