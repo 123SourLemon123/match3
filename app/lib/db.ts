@@ -22,6 +22,10 @@ export async function getUser(name: string): Promise<User | null> {
   await ensureRedisConnection();
   try {
     const redis = await getRedisClient();
+    if (!redis) {
+      console.error('Redis client is null');
+      return null;
+    }
     const userData = await redis.get(`user:${name}`);
     if (!userData) return null;
     console.log('User data retrieved:', userData);
