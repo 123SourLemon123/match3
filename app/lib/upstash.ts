@@ -3,6 +3,10 @@ import { Redis } from '@upstash/redis'
 let redis: Redis | null = null;
 
 export async function getRedisClient() {
+  console.log('getRedisClient called');
+  console.log('KV_REST_API_URL:', process.env.KV_REST_API_URL ? 'Set' : 'Not set');
+  console.log('KV_REST_API_TOKEN:', process.env.KV_REST_API_TOKEN ? 'Set' : 'Not set');
+
   if (typeof window !== 'undefined') {
     console.log('Running on client side, skipping Redis initialization');
     return null;
@@ -15,8 +19,6 @@ export async function getRedisClient() {
 
   if (!redis) {
     console.log('Creating new Redis client...');
-    console.log('KV_REST_API_URL:', process.env.KV_REST_API_URL);
-    console.log('KV_REST_API_TOKEN:', process.env.KV_REST_API_TOKEN ? '[REDACTED]' : 'Not set');
     redis = new Redis({
       url: process.env.KV_REST_API_URL,
       token: process.env.KV_REST_API_TOKEN,
