@@ -6,6 +6,10 @@ export default async function Home() {
   let initialLeaderboard: User[] = [];
   let error: Error | null = null;
 
+  console.log('Home component rendering');
+  console.log('KV_REST_API_URL:', process.env.KV_REST_API_URL ? 'Set' : 'Not set');
+  console.log('KV_REST_API_TOKEN:', process.env.KV_REST_API_TOKEN ? 'Set' : 'Not set');
+
   try {
     if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
       throw new Error(
