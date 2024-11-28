@@ -1,6 +1,7 @@
 import { MatchThreeGame } from './components/match-three-game'
 import { getLeaderboard, User } from './lib/db'
 import { DebugLog } from './components/debug-log'
+import Link from 'next/link'
 
 export default async function Home() {
   let initialLeaderboard: User[] = [];
@@ -42,6 +43,9 @@ export default async function Home() {
             </ol>
           </p>
         </div>
+        <Link href="/api/debug" className="mt-4 text-blue-500 hover:underline">
+          Проверить статус переменных окружения
+        </Link>
       </div>
     );
   }
@@ -50,6 +54,11 @@ export default async function Home() {
     <main className="min-h-screen bg-gray-100">
       <MatchThreeGame initialLeaderboard={initialLeaderboard} />
       <DebugLog />
+      <div className="fixed bottom-4 right-4">
+        <Link href="/api/debug" className="text-blue-500 hover:underline">
+          Проверить статус переменных окружения
+        </Link>
+      </div>
     </main>
   );
 }
