@@ -45,7 +45,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 p-4">
-      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.007</h1>
+      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.008</h1>
       <div className="flex flex-col items-center space-y-4">
         <Input
           type="text"
