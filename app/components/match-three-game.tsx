@@ -1,58 +1,50 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Cell } from './cell';
-import SliceEffect from './slice-effect';
-import { StartScreen } from './start-screen';
 import { Leaderboard } from './leaderboard';
-import { Cell as CellType, Position, EMOJI_COLORS } from '../types';
+import { StartScreen } from './start-screen';
+import { Cell as CellType, Position, PlayerScore } from '../types';
 import { createInitialGrid, checkForMatches, removeMatches, GRID_SIZE, canSwap } from '../utils';
-import { Button } from "@/components/ui/button"
-import { User } from '../lib/db';
-import { logout } from '../actions/auth';
+import { EMOJI_COLORS } from '../types';
+import { Button } from "../../components/ui/button"
+import Firework from './firework';
+import SliceEffect from './slice-effect';
 import { endGame } from '../actions/game';
+import { logout } from '../actions/auth';
 
 interface MatchThreeGameProps {
-  initialLeaderboard: User[];
+  initialLeaderboard: PlayerScore[];
 }
 
 export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboard }) => {
-  const [gameState, setGameState] = useState<'notStarted' | 'playing' | 'finished'>('notStarted');
-  const [playerName, setPlayerName] = useState('');
-  const [score, setScore] = useState(0);
-  const [highScore, setHighScore] = useState(0);
-  const [totalScore, setTotalScore] = useState(0);
   const [grid, setGrid] = useState<CellType[][]>(createInitialGrid());
   const [selectedCell, setSelectedCell] = useState<Position | null>(null);
-  const [invalidMove, setInvalidMove] = useState<boolean>(false);
-  const [sliceEffects, setSliceEffects] = useState<Position[]>([]);
-  const [leaderboard, setLeaderboard] = useState<User[]>(initialLeaderboard);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(0);
+  const [leaderboard, setLeaderboard] = useState<PlayerScore[]>(initialLeaderboard);
+  const [playerName, setPlayerName] = useState<string | null>(null);
+  const [gameState, setGameState] = useState<'start' | 'playing' | 'gameOver'>('start');
+  const [effects, setEffects] = useState<{ type: 'firework' | 'slice', position: Position, color: string }[]>([]);
 
   useEffect(() => {
     const matches = checkForMatches(grid);
     if (matches.length > 0) {
-      setSliceEffects(matches);
-      setTimeout(() => {
-        setGrid(removeMatches(grid, matches));
-        setSliceEffects([]);
-        setScore(prevScore => {
-          const newScore = prevScore + matches.length;
-          if (newScore > highScore) {
-            setHighScore(newScore);
-          }
-          return newScore;
-        });
-      }, 500);
+      const newGrid = removeMatches(grid, matches);
+      setGrid(newGrid);
+      setScore(prevScore => prevScore + matches.length);
+      setHighScore(prevHighScore => Math.max(prevHighScore, prevScore + matches.length));
+      
+      matches.forEach(match => {
+        const cellType = grid[match.row][match.col].type;
+        const color = EMOJI_COLORS[cellType];
+        setEffects(prev => [...prev, { type: 'slice', position: match, color }]);
+      });
     }
-  }, [grid, highScore]);
+  }, [grid]);
 
   const handleCellClick = (row: number, col: number) => {
-    if (!selectedCell) {
-      setSelectedCell({ row, col });
-      setInvalidMove(false);
-    } else {
+    if (selectedCell) {
       const dx = Math.abs(selectedCell.col - col);
       const dy = Math.abs(selectedCell.row - row);
 
@@ -60,142 +52,102 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
         if (canSwap(grid, selectedCell, { row, col })) {
           const newGrid = [...grid];
           [newGrid[selectedCell.row][selectedCell.col], newGrid[row][col]] = 
-          [newGrid[row][col], newGrid[selectedCell.row][selectedCell.col]];
+            [newGrid[row][col], newGrid[selectedCell.row][selectedCell.col]];
           setGrid(newGrid);
-          setInvalidMove(false);
         } else {
-          setInvalidMove(true);
-          setTimeout(() => setInvalidMove(false), 500);
+          // Анимация тряски при невозможности свапа
+          const cellElement = document.getElementById(`cell-${row}-${col}`);
+          if (cellElement) {
+            cellElement.classList.add('animate-shake');
+            setTimeout(() => cellElement.classList.remove('animate-shake'), 500);
+          }
         }
       }
-
       setSelectedCell(null);
+    } else {
+      setSelectedCell({ row, col });
     }
   };
 
-  const handleGameStart = (name: string, user: User) => {
-    console.log('Client: handleGameStart called with:', name, user);
+  const handleStartGame = (name: string) => {
     setPlayerName(name);
-    setHighScore(user.highScore);
-    setTotalScore(user.totalScore);
     setGameState('playing');
     setScore(0);
     setGrid(createInitialGrid());
   };
 
-  const handleGameEnd = async () => {
-    setIsLoading(true);
-    try {
-      console.log('Client: Ending game for player:', playerName, 'Score:', score, 'High Score:', highScore);
+  const handleEndGame = useCallback(async () => {
+    if (playerName) {
       const result = await endGame(playerName, highScore, score);
-      if (result.success && result.updatedUser && result.updatedLeaderboard) {
-        setTotalScore(result.updatedUser.totalScore);
-        setHighScore(result.updatedUser.highScore);
+      if (result.success && result.updatedLeaderboard) {
         setLeaderboard(result.updatedLeaderboard);
-        setGameState('finished');
-        console.log('Client: Game ended successfully');
-      } else {
-        throw new Error(result.message);
       }
-    } catch (error) {
-      console.error('Client: Error ending game:', error);
-      setError(`Произошла ошибка при завершении игры: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-    } finally {
-      setIsLoading(false);
     }
-  };
+    setGameState('gameOver');
+    setEffects(prev => [...prev, { type: 'firework', position: { row: GRID_SIZE / 2, col: GRID_SIZE / 2 }, color: '#FFD700' }]);
+  }, [playerName, highScore, score]);
 
   const handleLogout = async () => {
-    setIsLoading(true);
-    try {
-      await logout();
-      setGameState('notStarted');
-      setPlayerName('');
-      setScore(0);
-      setHighScore(0);
-      setTotalScore(0);
-    } catch (error) {
-      console.error('Error during logout:', error);
-      setError(`Произошла ошибка при выходе: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-    } finally {
-      setIsLoading(false);
-    }
+    await logout();
+    setPlayerName(null);
+    setGameState('start');
   };
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">Ошибка</h1>
-        <p>{error}</p>
-        <Button className="mt-4 bg-black text-white hover:bg-gray-800" onClick={() => setError(null)} disabled={isLoading}>
-          Попробовать снова
-        </Button>
-      </div>
-    );
-  }
+  const removeEffect = (index: number) => {
+    setEffects(prev => prev.filter((_, i) => i !== index));
+  };
 
-  if (gameState === 'notStarted') {
-    return <StartScreen onStart={handleGameStart} initialLeaderboard={leaderboard} />;
-  }
-
-  if (gameState === 'finished') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 space-y-8">
-        <h1 className="text-4xl font-bold text-black">Игра окончена!</h1>
-        <p className="text-2xl">Ваш счет за эту игру: {score}</p>
-        <p className="text-2xl">Ваш рекорд: {highScore}</p>
-        <p className="text-2xl">Ваши общие очки: {totalScore}</p>
-        <Button 
-          onClick={() => {
-            setGameState('playing');
-            setScore(0);
-            setGrid(createInitialGrid());
-          }} 
-          disabled={isLoading}
-          className="bg-black text-white hover:bg-gray-800"
-        >
-          Начать новую игру
-        </Button>
-        <Button onClick={handleLogout} disabled={isLoading} className="bg-black text-white hover:bg-gray-800">Выйти</Button>
-        <Leaderboard scores={leaderboard} />
-      </div>
-    );
+  if (gameState === 'start') {
+    return <StartScreen onStartGame={handleStartGame} />;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-4 text-black">Три в ряд v1.009</h1>
-      <div className="mb-4 text-lg">
-        <span className="font-bold">{playerName}</span> - Текущий счет: {score} | Рекорд: {highScore} | Общие очки: {totalScore}
-      </div>
-      <div 
-        className={`relative grid bg-white p-4 rounded-lg shadow-lg ${invalidMove ? 'animate-shake' : ''}`}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${GRID_SIZE}, 40px)`,
-          gridTemplateRows: `repeat(${GRID_SIZE}, 40px)`,
-          gap: '4px',
-        }}
-      >
-        {grid.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <div key={`${rowIndex}-${colIndex}`} className="relative">
-              <Cell
-                cell={cell}
-                isSelected={selectedCell?.row === rowIndex && selectedCell?.col === colIndex}
-                onClick={() => handleCellClick(rowIndex, colIndex)}
-              />
-              {sliceEffects.some(pos => pos.row === rowIndex && pos.col === colIndex) && (
-                <SliceEffect
-                  color={EMOJI_COLORS[cell.type]}
-                  onComplete={() => {}}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <h1 className="text-4xl font-bold mb-4">Три в ряд</h1>
+      <div className="flex flex-col md:flex-row items-start gap-8">
+        <div className="flex flex-col items-center">
+          <div className="mb-4">
+            <p className="text-xl font-semibold">Игрок: {playerName}</p>
+            <p className="text-xl">Счет: {score}</p>
+            <p className="text-xl">Рекорд: {highScore}</p>
+          </div>
+          <div className="grid grid-cols-15 gap-1 bg-white p-2 rounded-lg shadow-lg relative">
+            {grid.map((row, rowIndex) =>
+              row.map((cell, colIndex) => (
+                <div key={`${rowIndex}-${colIndex}`} id={`cell-${rowIndex}-${colIndex}`} className="w-8 h-8">
+                  <Cell
+                    cell={cell}
+                    isSelected={selectedCell?.row === rowIndex && selectedCell?.col === colIndex}
+                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                  />
+                </div>
+              ))
+            )}
+            {effects.map((effect, index) => (
+              effect.type === 'firework' ? (
+                <Firework
+                  key={index}
+                  color={effect.color}
+                  onComplete={() => removeEffect(index)}
                 />
-              )}
-            </div>
-          ))
-        )}
+              ) : (
+                <SliceEffect
+                  key={index}
+                  color={effect.color}
+                  onComplete={() => removeEffect(index)}
+                />
+              )
+            ))}
+          </div>
+          <div className="mt-4 space-x-4">
+            <Button onClick={handleEndGame}>Закончить игру</Button>
+            <Button onClick={handleLogout} variant="outline">Выйти</Button>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-lg">
+          <Leaderboard scores={leaderboard} />
+        </div>
       </div>
-      <Button className="mt-4 bg-black text-white hover:bg-gray-800" onClick={handleGameEnd} disabled={isLoading}>Завершить игру</Button>
     </div>
   );
 };
