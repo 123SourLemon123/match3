@@ -3,78 +3,67 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Leaderboard } from './leaderboard';
-import { register, login } from '../actions/auth';
-import { User } from '../lib/db';
-import { DebugLog } from './debug-log';
+import { login, register } from '../actions/auth';
 
 interface StartScreenProps {
-  onStart: (playerName: string, user: User) => void;
-  initialLeaderboard: User[];
+  onStartGame: (playerName: string) => void;
 }
 
-export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeaderboard }) => {
-  const [playerName, setPlayerName] = useState('');
+export const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [leaderboard, setLeaderboard] = useState<User[]>(initialLeaderboard);
 
-  const handleAuth = async () => {
-    console.log('Client: handleAuth called');
+  const handleAuth = async (action: 'login' | 'register') => {
     setIsLoading(true);
     setMessage('');
-    const action = isLogin ? login : register;
+
     try {
-      console.log(`Client: Attempting to ${isLogin ? 'login' : 'register'} user: ${playerName}`);
-      const result = await action(playerName, password);
-      console.log('Client: Auth result:', result);
-      setMessage(result.message);
-      if (result.success && result.user) {
-        console.log('Client: Auth successful, starting game');
-        onStart(playerName, result.user);
+      const result = action === 'login' 
+        ? await login(name, password)
+        : await register(name, password);
+
+      if (result.success) {
+        onStartGame(name);
+      } else {
+        setMessage(result.message);
       }
     } catch (error) {
-      console.error('Client: Error during authentication:', error);
-      setMessage(`Произошла ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      setMessage('Произошла ошибка при аутентификации');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-8 p-4">
-      <h1 className="text-4xl font-bold text-black">Три в ряд v1.009</h1>
-      <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 className="text-2xl font-bold mb-6 text-center">Добро пожаловать в игру "Три в ряд"</h1>
         <Input
           type="text"
-          placeholder="Имя пользователя"
-          value={playerName}
-          onChange={(e) => setPlayerName(e.target.value)}
-          className="max-w-xs"
+          placeholder="Имя игрока"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-4"
         />
         <Input
           type="password"
           placeholder="Пароль"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="max-w-xs"
+          className="mb-4"
         />
-        <Button 
-          onClick={handleAuth} 
-          disabled={isLoading}
-          className="bg-black hover:bg-gray-800 text-white"
-        >
-          {isLogin ? 'Войти' : 'Зарегистрироваться'}
-        </Button>
-        <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="text-black">
-          {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
-        </Button>
-        {message && <p className={`text-${message.includes('успешн') ? 'green' : 'red'}-500`}>{message}</p>}
+        <div className="flex justify-between">
+          <Button onClick={() => handleAuth('login')} disabled={isLoading}>
+            Войти
+          </Button>
+          <Button onClick={() => handleAuth('register')} disabled={isLoading}>
+            Регистрация
+          </Button>
+        </div>
+        {message && <p className="mt-4 text-red-500">{message}</p>}
       </div>
-      <Leaderboard scores={leaderboard} />
-      <DebugLog />
     </div>
   );
 };
