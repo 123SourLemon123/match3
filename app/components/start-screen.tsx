@@ -45,7 +45,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 p-4">
-      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.008</h1>
+      <h1 className="text-4xl font-bold text-black">Три в ряд v1.009</h1>
       <div className="flex flex-col items-center space-y-4">
         <Input
           type="text"
@@ -61,10 +61,14 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
           onChange={(e) => setPassword(e.target.value)}
           className="max-w-xs"
         />
-        <Button onClick={handleAuth} disabled={isLoading}>
+        <Button 
+          onClick={handleAuth} 
+          disabled={isLoading}
+          className="bg-black hover:bg-gray-800 text-white"
+        >
           {isLogin ? 'Войти' : 'Зарегистрироваться'}
         </Button>
-        <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
+        <Button variant="link" onClick={() => setIsLogin(!isLogin)} className="text-black">
           {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
         </Button>
         {message && <p className={`text-${message.includes('успешн') ? 'green' : 'red'}-500`}>{message}</p>}
