@@ -8,7 +8,7 @@ import { Leaderboard } from './leaderboard';
 import { Cell as CellType, Position, EMOJI_COLORS } from '../types';
 import { createInitialGrid, checkForMatches, removeMatches, GRID_SIZE, canSwap } from '../utils';
 import { Button } from "@/components/ui/button"
-import { updateUserScores, getUser, getLeaderboard, User } from '../lib/db';
+import { updateUserScores, getLeaderboard, User } from '../lib/db';
 import { logout } from '../actions/auth';
 
 interface MatchThreeGameProps {
@@ -73,25 +73,14 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
     }
   };
 
-  const handleGameStart = async (name: string) => {
-    setIsLoading(true);
-    try {
-      setPlayerName(name);
-      const user = await getUser(name);
-      if (user) {
-        setHighScore(user.highScore);
-        setTotalScore(user.totalScore);
-      }
-      setGameState('playing');
-      setScore(0);
-      setScoreAdded(false);
-      setGrid(createInitialGrid());
-    } catch (error) {
-      console.error('Error starting game:', error);
-      setError('Произошла ошибка при начале игры. Пожалуйста, попробуйте еще раз.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGameStart = (name: string, userHighScore: number, userTotalScore: number) => {
+    setPlayerName(name);
+    setHighScore(userHighScore);
+    setTotalScore(userTotalScore);
+    setGameState('playing');
+    setScore(0);
+    setScoreAdded(false);
+    setGrid(createInitialGrid());
   };
 
   const handleGameEnd = async () => {
@@ -101,11 +90,6 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
       if (!scoreAdded) {
         await updateUserScores(playerName, highScore, score);
         setScoreAdded(true);
-      }
-      const updatedUser = await getUser(playerName);
-      if (updatedUser) {
-        setTotalScore(updatedUser.totalScore);
-        setHighScore(updatedUser.highScore);
       }
       const updatedLeaderboard = await getLeaderboard();
       setLeaderboard(updatedLeaderboard);
@@ -141,7 +125,9 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
         <h1 className="text-2xl font-bold text-red-500 mb-4">Ошибка</h1>
         <p>{error}</p>
-        <Button className="mt-4" onClick={() => setError(null)} isLoading={isLoading}>Попробовать снова</Button>
+        <Button className="mt-4" onClick={() => setError(null)} disabled={isLoading}>
+          Попробовать снова
+        </Button>
       </div>
     );
   }
@@ -164,11 +150,11 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
             setScoreAdded(false);
             setGrid(createInitialGrid());
           }} 
-          isLoading={isLoading}
+          disabled={isLoading}
         >
           Начать новую игру
         </Button>
-        <Button onClick={handleLogout} isLoading={isLoading}>Выйти</Button>
+        <Button onClick={handleLogout} disabled={isLoading}>Выйти</Button>
         <Leaderboard scores={leaderboard} />
       </div>
     );
@@ -176,7 +162,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.005</h1>
+      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.006</h1>
       <div className="mb-4 text-lg">
         <span className="font-bold">{playerName}</span> - Текущий счет: {score} | Рекорд: {highScore} | Общие очки: {totalScore}
       </div>
@@ -207,7 +193,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
           ))
         )}
       </div>
-      <Button className="mt-4" onClick={handleGameEnd} isLoading={isLoading}>Завершить игру</Button>
+      <Button className="mt-4" onClick={handleGameEnd} disabled={isLoading}>Завершить игру</Button>
     </div>
   );
 };
