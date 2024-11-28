@@ -4,13 +4,14 @@ let redis: Redis | null = null;
 
 export async function getRedisClient() {
   console.log('getRedisClient called');
+  
+  if (typeof window !== 'undefined') {
+    console.log('Running on client side, Redis operations are not allowed');
+    throw new Error('Redis operations are not allowed on the client side');
+  }
+
   console.log('KV_REST_API_URL:', process.env.KV_REST_API_URL ? 'Set' : 'Not set');
   console.log('KV_REST_API_TOKEN:', process.env.KV_REST_API_TOKEN ? 'Set' : 'Not set');
-
-  if (typeof window !== 'undefined') {
-    console.log('Running on client side, skipping Redis initialization');
-    return null;
-  }
 
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
     console.error('KV_REST_API_URL or KV_REST_API_TOKEN is not set');
@@ -30,13 +31,8 @@ export async function getRedisClient() {
 
 export async function checkRedisConnection() {
   try {
-    console.log('Attempting to get Redis client...');
+    console.log('Checking Redis connection...');
     const client = await getRedisClient();
-    if (!client) {
-      console.log('Redis client is null, skipping connection check');
-      return false;
-    }
-    console.log('Redis client obtained, attempting to ping...');
     const pong = await client.ping();
     console.log('Redis ping response:', pong);
     return pong === 'PONG';
