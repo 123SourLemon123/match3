@@ -7,6 +7,13 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#000000',
+          foreground: '#ffffff',
+        },
+        // You can add more custom colors here if needed
+      },
       gridTemplateColumns: {
         '15': 'repeat(15, minmax(0, 1fr))',
       },
