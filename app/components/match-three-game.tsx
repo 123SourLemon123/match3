@@ -8,8 +8,9 @@ import { Leaderboard } from './leaderboard';
 import { Cell as CellType, Position, EMOJI_COLORS } from '../types';
 import { createInitialGrid, checkForMatches, removeMatches, GRID_SIZE, canSwap } from '../utils';
 import { Button } from "@/components/ui/button"
-import { updateUserScores, getUser, getLeaderboard, User } from '../lib/db';
+import { User } from '../lib/db';
 import { logout } from '../actions/auth';
+import { endGame } from '../actions/game';
 
 interface MatchThreeGameProps {
   initialLeaderboard: User[];
@@ -27,7 +28,6 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
   const [sliceEffects, setSliceEffects] = useState<Position[]>([]);
   const [leaderboard, setLeaderboard] = useState<User[]>(initialLeaderboard);
   const [error, setError] = useState<string | null>(null);
-  const [scoreAdded, setScoreAdded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -80,29 +80,25 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
     setTotalScore(user.totalScore);
     setGameState('playing');
     setScore(0);
-    setScoreAdded(false);
     setGrid(createInitialGrid());
   };
 
   const handleGameEnd = async () => {
     setIsLoading(true);
     try {
-      console.log('Ending game for player:', playerName, 'Score:', score, 'High Score:', highScore);
-      if (!scoreAdded) {
-        await updateUserScores(playerName, highScore, score);
-        setScoreAdded(true);
+      console.log('Client: Ending game for player:', playerName, 'Score:', score, 'High Score:', highScore);
+      const result = await endGame(playerName, highScore, score);
+      if (result.success && result.updatedUser && result.updatedLeaderboard) {
+        setTotalScore(result.updatedUser.totalScore);
+        setHighScore(result.updatedUser.highScore);
+        setLeaderboard(result.updatedLeaderboard);
+        setGameState('finished');
+        console.log('Client: Game ended successfully');
+      } else {
+        throw new Error(result.message);
       }
-      const updatedUser = await getUser(playerName);
-      if (updatedUser) {
-        setTotalScore(updatedUser.totalScore);
-        setHighScore(updatedUser.highScore);
-      }
-      const updatedLeaderboard = await getLeaderboard();
-      setLeaderboard(updatedLeaderboard);
-      setGameState('finished');
-      console.log('Game ended successfully');
     } catch (error) {
-      console.error('Error ending game:', error);
+      console.error('Client: Error ending game:', error);
       setError(`Произошла ошибка при завершении игры: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
       setIsLoading(false);
@@ -153,7 +149,6 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
           onClick={() => {
             setGameState('playing');
             setScore(0);
-            setScoreAdded(false);
             setGrid(createInitialGrid());
           }} 
           disabled={isLoading}
@@ -168,7 +163,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.008</h1>
+      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.009</h1>
       <div className="mb-4 text-lg">
         <span className="font-bold">{playerName}</span> - Текущий счет: {score} | Рекорд: {highScore} | Общие очки: {totalScore}
       </div>
