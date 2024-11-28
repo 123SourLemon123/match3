@@ -23,8 +23,7 @@ export async function getUser(name: string): Promise<User | null> {
   try {
     const redis = await getRedisClient();
     if (!redis) {
-      console.error('Redis client is null');
-      return null;
+      throw new Error('Redis client is null');
     }
     const userData = await redis.get(`user:${name}`);
     if (!userData) return null;
@@ -47,6 +46,9 @@ export async function createUser(user: User): Promise<void> {
   await ensureRedisConnection();
   try {
     const redis = await getRedisClient();
+    if (!redis) {
+      throw new Error('Redis client is null');
+    }
     await redis.set(`user:${user.name}`, JSON.stringify(user));
     console.log('User created successfully:', user.name);
   } catch (error) {
@@ -60,6 +62,9 @@ export async function updateUserScores(name: string, highScore: number, totalSco
   await ensureRedisConnection();
   try {
     const redis = await getRedisClient();
+    if (!redis) {
+      throw new Error('Redis client is null');
+    }
     const user = await getUser(name);
     if (user) {
       user.highScore = Math.max(user.highScore, highScore);
@@ -81,6 +86,9 @@ export async function getLeaderboard(): Promise<User[]> {
   await ensureRedisConnection();
   try {
     const redis = await getRedisClient();
+    if (!redis) {
+      throw new Error('Redis client is null');
+    }
     const keys = await redis.keys('user:*');
     console.log('User keys fetched:', keys);
     const users = await Promise.all(
