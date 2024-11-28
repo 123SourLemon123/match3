@@ -1,17 +1,17 @@
-'use server'
-
-import { createUser, getUser } from '../lib/db';
-import { cookies } from 'next/headers';
+import { cookies } from './cookies';
+import { createUser, getUser } from './db';
 
 export async function register(name: string, password: string) {
   console.log('Attempting to register user:', name);
   try {
+    console.log('Checking if user already exists...');
     const existingUser = await getUser(name);
     if (existingUser) {
       console.log('User already exists:', name);
       return { success: false, message: 'Пользователь с таким именем уже существует' };
     }
 
+    console.log('Creating new user...');
     await createUser({ name, password, highScore: 0, totalScore: 0 });
     cookies().set('user', name);
     console.log('User registered successfully:', name);
@@ -28,6 +28,7 @@ export async function register(name: string, password: string) {
 export async function login(name: string, password: string) {
   console.log('Attempting to log in user:', name);
   try {
+    console.log('Getting user from database...');
     const user = await getUser(name);
     if (!user || user.password !== password) {
       console.log('Login failed for user:', name);
@@ -36,7 +37,7 @@ export async function login(name: string, password: string) {
 
     cookies().set('user', name);
     console.log('User logged in successfully:', name);
-    return { success: true, message: 'Вход выполнен успешно', user };
+    return { success: true, message: 'Вход выполнен успешно' };
   } catch (error) {
     console.error('Error during login:', error);
     return { 
@@ -44,18 +45,5 @@ export async function login(name: string, password: string) {
       message: `Произошла ошибка при входе: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}` 
     };
   }
-}
-
-export async function logout() {
-  cookies().delete('user');
-  console.log('User logged out');
-}
-
-export async function getCurrentUser() {
-  const userName = cookies().get('user')?.value;
-  if (userName) {
-    return await getUser(userName);
-  }
-  return null;
 }
 
