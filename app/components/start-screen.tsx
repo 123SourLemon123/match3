@@ -9,7 +9,7 @@ import { User } from '../lib/db';
 import { DebugLog } from './debug-log';
 
 interface StartScreenProps {
-  onStart: (playerName: string, highScore: number, totalScore: number) => void;
+  onStart: (playerName: string, user: User) => void;
   initialLeaderboard: User[];
 }
 
@@ -22,19 +22,21 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
   const [leaderboard, setLeaderboard] = useState<User[]>(initialLeaderboard);
 
   const handleAuth = async () => {
+    console.log('Client: handleAuth called');
     setIsLoading(true);
     setMessage('');
     const action = isLogin ? login : register;
     try {
-      console.log(`Attempting to ${isLogin ? 'login' : 'register'} user: ${playerName}`);
+      console.log(`Client: Attempting to ${isLogin ? 'login' : 'register'} user: ${playerName}`);
       const result = await action(playerName, password);
-      console.log('Auth result:', result);
+      console.log('Client: Auth result:', result);
       setMessage(result.message);
       if (result.success && result.user) {
-        onStart(result.user.name, result.user.highScore, result.user.totalScore);
+        console.log('Client: Auth successful, starting game');
+        onStart(playerName, result.user);
       }
     } catch (error) {
-      console.error('Error during authentication:', error);
+      console.error('Client: Error during authentication:', error);
       setMessage(`Произошла ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     } finally {
       setIsLoading(false);
@@ -43,7 +45,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 p-4">
-      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.006</h1>
+      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.007</h1>
       <div className="flex flex-col items-center space-y-4">
         <Input
           type="text"
