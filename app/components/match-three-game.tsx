@@ -8,7 +8,7 @@ import { Leaderboard } from './leaderboard';
 import { Cell as CellType, Position, EMOJI_COLORS } from '../types';
 import { createInitialGrid, checkForMatches, removeMatches, GRID_SIZE, canSwap } from '../utils';
 import { Button } from "@/components/ui/button"
-import { updateUserScores, getLeaderboard, User } from '../lib/db';
+import { updateUserScores, getUser, getLeaderboard, User } from '../lib/db';
 import { logout } from '../actions/auth';
 
 interface MatchThreeGameProps {
@@ -73,10 +73,11 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
     }
   };
 
-  const handleGameStart = (name: string, userHighScore: number, userTotalScore: number) => {
+  const handleGameStart = (name: string, user: User) => {
+    console.log('Client: handleGameStart called with:', name, user);
     setPlayerName(name);
-    setHighScore(userHighScore);
-    setTotalScore(userTotalScore);
+    setHighScore(user.highScore);
+    setTotalScore(user.totalScore);
     setGameState('playing');
     setScore(0);
     setScoreAdded(false);
@@ -90,6 +91,11 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
       if (!scoreAdded) {
         await updateUserScores(playerName, highScore, score);
         setScoreAdded(true);
+      }
+      const updatedUser = await getUser(playerName);
+      if (updatedUser) {
+        setTotalScore(updatedUser.totalScore);
+        setHighScore(updatedUser.highScore);
       }
       const updatedLeaderboard = await getLeaderboard();
       setLeaderboard(updatedLeaderboard);
@@ -162,7 +168,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.006</h1>
+      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.008</h1>
       <div className="mb-4 text-lg">
         <span className="font-bold">{playerName}</span> - Текущий счет: {score} | Рекорд: {highScore} | Общие очки: {totalScore}
       </div>
