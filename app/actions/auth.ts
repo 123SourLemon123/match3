@@ -36,7 +36,7 @@ export async function login(name: string, password: string) {
 
     cookies().set('user', name);
     console.log('User logged in successfully:', name);
-    return { success: true, message: 'Вход выполнен успешно' };
+    return { success: true, message: 'Вход выполнен успешно', user };
   } catch (error) {
     console.error('Error during login:', error);
     return { 
@@ -49,5 +49,13 @@ export async function login(name: string, password: string) {
 export async function logout() {
   cookies().delete('user');
   console.log('User logged out');
+}
+
+export async function getCurrentUser() {
+  const userName = cookies().get('user')?.value;
+  if (userName) {
+    return await getUser(userName);
+  }
+  return null;
 }
 
