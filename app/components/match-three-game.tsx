@@ -7,7 +7,7 @@ import { StartScreen } from './start-screen';
 import { Cell as CellType, Position, PlayerScore } from '../types';
 import { createInitialGrid, checkForMatches, removeMatches, GRID_SIZE, canSwap } from '../utils';
 import { EMOJI_COLORS } from '../types';
-import { Button } from "../../components/ui/button"
+import { Button } from "@/components/ui/button"
 import Firework from './firework';
 import SliceEffect from './slice-effect';
 import { endGame } from '../actions/game';
