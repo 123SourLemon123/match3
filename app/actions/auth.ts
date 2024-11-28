@@ -1,5 +1,7 @@
-import { cookies } from './cookies';
-import { createUser, getUser } from './db';
+'use server'
+
+import { cookies } from 'next/headers';
+import { createUser, getUser } from '../lib/db';
 
 export async function register(name: string, password: string) {
   console.log('Attempting to register user:', name);
@@ -45,5 +47,10 @@ export async function login(name: string, password: string) {
       message: `Произошла ошибка при входе: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}` 
     };
   }
+}
+
+export async function logout() {
+  cookies().delete('user');
+  console.log('User logged out');
 }
 
