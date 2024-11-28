@@ -46,7 +46,7 @@ export function checkForMatches(grid: Cell[][]): Position[] {
 
 export function removeMatches(grid: Cell[][], matches: Position[]): Cell[][] {
   const newGrid = grid.map(row => [...row]);
-  
+
   matches.forEach(({ row, col }) => {
     for (let i = row; i > 0; i--) {
       newGrid[i][col] = newGrid[i - 1][col];
@@ -62,12 +62,12 @@ export function removeMatches(grid: Cell[][], matches: Position[]): Cell[][] {
 
 export function canSwap(grid: Cell[][], pos1: Position, pos2: Position): boolean {
   const newGrid = grid.map(row => [...row]);
-  
+
   [newGrid[pos1.row][pos1.col], newGrid[pos2.row][pos2.col]] = 
   [newGrid[pos2.row][pos2.col], newGrid[pos1.row][pos1.col]];
-  
+
   const matches = checkForMatches(newGrid);
-  
+
   return matches.length > 0;
 }
 
