@@ -127,7 +127,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
         <h1 className="text-2xl font-bold text-red-500 mb-4">Ошибка</h1>
         <p>{error}</p>
-        <Button className="mt-4" onClick={() => setError(null)} disabled={isLoading}>
+        <Button className="mt-4 bg-black text-white hover:bg-gray-800" onClick={() => setError(null)} disabled={isLoading}>
           Попробовать снова
         </Button>
       </div>
@@ -141,7 +141,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
   if (gameState === 'finished') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 space-y-8">
-        <h1 className="text-4xl font-bold text-primary">Игра окончена!</h1>
+        <h1 className="text-4xl font-bold text-black">Игра окончена!</h1>
         <p className="text-2xl">Ваш счет за эту игру: {score}</p>
         <p className="text-2xl">Ваш рекорд: {highScore}</p>
         <p className="text-2xl">Ваши общие очки: {totalScore}</p>
@@ -152,10 +152,11 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
             setGrid(createInitialGrid());
           }} 
           disabled={isLoading}
+          className="bg-black text-white hover:bg-gray-800"
         >
           Начать новую игру
         </Button>
-        <Button onClick={handleLogout} disabled={isLoading}>Выйти</Button>
+        <Button onClick={handleLogout} disabled={isLoading} className="bg-black text-white hover:bg-gray-800">Выйти</Button>
         <Leaderboard scores={leaderboard} />
       </div>
     );
@@ -163,7 +164,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-4 text-primary">Три в ряд v1.009</h1>
+      <h1 className="text-4xl font-bold mb-4 text-black">Три в ряд v1.009</h1>
       <div className="mb-4 text-lg">
         <span className="font-bold">{playerName}</span> - Текущий счет: {score} | Рекорд: {highScore} | Общие очки: {totalScore}
       </div>
@@ -194,7 +195,7 @@ export const MatchThreeGame: React.FC<MatchThreeGameProps> = ({ initialLeaderboa
           ))
         )}
       </div>
-      <Button className="mt-4" onClick={handleGameEnd} disabled={isLoading}>Завершить игру</Button>
+      <Button className="mt-4 bg-black text-white hover:bg-gray-800" onClick={handleGameEnd} disabled={isLoading}>Завершить игру</Button>
     </div>
   );
 };
