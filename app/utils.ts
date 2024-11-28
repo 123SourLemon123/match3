@@ -64,7 +64,7 @@ export function canSwap(grid: Cell[][], pos1: Position, pos2: Position): boolean
   const newGrid = grid.map(row => [...row]);
 
   [newGrid[pos1.row][pos1.col], newGrid[pos2.row][pos2.col]] = 
-  [newGrid[pos2.row][pos2.col], newGrid[pos1.row][pos1.col]];
+    [newGrid[pos2.row][pos2.col], newGrid[pos1.row][pos1.col]];
 
   const matches = checkForMatches(newGrid);
 
