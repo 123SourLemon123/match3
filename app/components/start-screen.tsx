@@ -9,7 +9,7 @@ import { User } from '../lib/db';
 import { DebugLog } from './debug-log';
 
 interface StartScreenProps {
-  onStart: (playerName: string) => Promise<void>;
+  onStart: (playerName: string, highScore: number, totalScore: number) => void;
   initialLeaderboard: User[];
 }
 
@@ -30,8 +30,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
       const result = await action(playerName, password);
       console.log('Auth result:', result);
       setMessage(result.message);
-      if (result.success) {
-        await onStart(playerName);
+      if (result.success && result.user) {
+        onStart(result.user.name, result.user.highScore, result.user.totalScore);
       }
     } catch (error) {
       console.error('Error during authentication:', error);
@@ -43,7 +43,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 p-4">
-      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.005</h1>
+      <h1 className="text-4xl font-bold text-primary">Три в ряд v1.006</h1>
       <div className="flex flex-col items-center space-y-4">
         <Input
           type="text"
@@ -59,7 +59,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart, initialLeader
           onChange={(e) => setPassword(e.target.value)}
           className="max-w-xs"
         />
-        <Button onClick={handleAuth} isLoading={isLoading}>
+        <Button onClick={handleAuth} disabled={isLoading}>
           {isLogin ? 'Войти' : 'Зарегистрироваться'}
         </Button>
         <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
